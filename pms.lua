@@ -128,6 +128,7 @@ function pms.load(path)
     skip(buf, 1)
     local prop = {}
     prop.style = readInt16(buf)
+    -- Why is there width/height as well as scale x/y?
     prop.width = readInt32(buf)
     prop.height = readInt32(buf)
     prop.x = readFloat32(buf)

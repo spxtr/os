@@ -1,9 +1,8 @@
 require "pms"
 
 function love.load(arg)
-  if #arg < 2 then error("usage: love . <soldat_dir> [map_name]") end
-  local dir = arg[2]
-  local m = arg[3] or "ctf_Ash.pms"
+  local dir = arg[2] or "./example"
+  local m = arg[3] or "Example.PMS"
 
   map = pms.load(dir .. "/maps/" .. m)
 
@@ -38,7 +37,7 @@ function love.load(arg)
       scenery[v.level][v.style] = love.graphics.newSpriteBatch(sceneryImages[v.style], 1000, "static")
     end
     scenery[v.level][v.style]:setColor(v.color)
-    scenery[v.level][v.style]:add(v.x, v.y, v.r, v.sx, v.sy)
+    scenery[v.level][v.style]:add(v.x, v.y, v.r, v.width / sceneryImages[v.style]:getWidth() * v.sx, v.height / sceneryImages[v.style]:getHeight() * v.sy)
   end
 
   viewport = {x=0, y=0}
@@ -109,15 +108,16 @@ function newImg(path)
   return love.graphics.newImage(imgDat)
 end
 
--- Many of Soldat's images can be either .bmp or .png. It's pretty gross, and
--- I'm fairly sure that I'm loading the wrong things sometimes.
+-- Many of Soldat's images can be either .bmp or .png. In general, prefer the
+-- .png version.
 function loadImg(path)
-  local ok, img = pcall(newImg, path)
+  local png = path:gsub(".bmp", ".png")
+  local ok, img = pcall(newImg, png)
   if ok then
     return img
   end
-  local png = path:gsub(".bmp", ".png")
-  return newImg(png)
+  local bmp = path:gsub(".png", ".bmp")
+  return newImg(bmp)
 end
 
 -- From https://love2d.org/wiki/Gradients

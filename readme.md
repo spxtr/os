@@ -3,7 +3,13 @@
 ```
 git clone https://github.com/spxtr/os
 cd os
-love . /PATH/TO/SOLDAT/DIR [MAP.pms]
+love .
+```
+
+To open a specific map, point it at your Soldat installation:
+
+```
+love . /path/to/soldat/dir Map.pms
 ```
 
 * [Soldat homepage](https://soldat.pl/)
@@ -16,10 +22,6 @@ love . /PATH/TO/SOLDAT/DIR [MAP.pms]
 * Missing files currently halt the program.
   * Missing scenery should be replaced with a placeholder or nothing at all.
   * Missing textures should use a default.
-* Make sure we're loading the appropriate version of files where we have both
-  `.png` and `.bmp`.
-* Some scenery are incorrectly scaled. It might be due to loading the wrong
-  version. See the trees on the sides of `ctf_Ash` for an example.
 * Look around with the mouse, zoom with the scrollwheel.
 * View colliders, spawnpoints, and waypoints.
 * Save screenshots.
