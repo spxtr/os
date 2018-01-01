@@ -3,13 +3,13 @@
 ```
 git clone https://github.com/spxtr/os
 cd os
-love .
+love src
 ```
 
 To open a specific map, point it at your Soldat installation:
 
 ```
-love . /path/to/soldat/dir Map.pms
+love src /path/to/soldat/dir Map.pms
 ```
 
 * [Soldat homepage](https://soldat.pl/)
