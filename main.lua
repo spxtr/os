@@ -11,17 +11,17 @@ function love.load(arg)
 
   -- Set the texture wrap mode to "repeat" instead of the default "clamp"
   -- which causes artifacts at the edge.
-  texture = loadImg(dir .. "/textures/" .. map.texture)
+  local texture = loadImg(dir .. "/textures/" .. map.texture)
   texture:setWrap("repeat", "repeat")
   -- Use a static mesh to draw the polygons.
   polyMesh = love.graphics.newMesh(map.vertMesh, "triangles", "static")
   polyMesh:setTexture(texture)
 
-  -- Soldat likes to use (0, 255, 0, 255) to indicate transparency.
-  sceneryImages = {}
+  local sceneryImages = {}
   for k,v in ipairs(map.scenery) do
     local img = loadImg(dir .. "/scenery-gfx/" .. v)
     local dat = img:getData()
+    -- Soldat likes to use (0, 255, 0, 255) to indicate transparency.
     dat:mapPixel(function(x, y, r, g, b, a) 
       if r == 0 and g == 255 and b == 0 and a == 255 then
         return 0, 0, 0, 0
@@ -29,6 +29,16 @@ function love.load(arg)
       return r, g, b, a
     end)
     sceneryImages[k] = love.graphics.newImage(dat)
+  end
+
+  -- level -> [SpriteBatch]
+  scenery = {[0]={}, {}, {}}
+  for k,v in ipairs(map.props) do
+    if not scenery[v.level][v.style] then
+      scenery[v.level][v.style] = love.graphics.newSpriteBatch(sceneryImages[v.style], 1000, "static")
+    end
+    scenery[v.level][v.style]:setColor(v.color)
+    scenery[v.level][v.style]:add(v.x, v.y, v.r, v.sx, v.sy)
   end
 
   viewport = {x=0, y=0}
@@ -53,29 +63,21 @@ function love.draw()
   -- Draw background. It extends 100px out of the boundary of the map.
   love.graphics.draw(bgGrad, map.minX - 100, map.minY - 100, 0.0, map.maxX - map.minX + 200, map.maxY - map.minY + 200)
   -- Draw scenery in the back.
-  for k,v in ipairs(map.props) do
-    if v.level == 0 then
-      love.graphics.setColor(v.color)
-      love.graphics.draw(sceneryImages[v.style], v.x, v.y, v.r, v.sx, v.sy)
-    end
+  for k,v in pairs(scenery[0]) do
+    love.graphics.draw(v)
   end
   -- Draw players.
   -- Draw scenery in front of the players.
-  for k,v in ipairs(map.props) do
-    if v.level == 1 then
-      love.graphics.setColor(v.color)
-      love.graphics.draw(sceneryImages[v.style], v.x, v.y, v.r, v.sx, v.sy)
-    end
+  for k,v in pairs(scenery[1]) do
+    love.graphics.draw(v)
   end
   -- Draw polygons.
   love.graphics.draw(polyMesh)
   -- Draw scenery in front of everything.
-  for k,v in ipairs(map.props) do
-    if v.level == 2 then
-      love.graphics.setColor(v.color)
-      love.graphics.draw(sceneryImages[v.style], v.x, v.y, v.r, v.sx, v.sy)
-    end
+  for k,v in pairs(scenery[2]) do
+    love.graphics.draw(v)
   end
+
   love.graphics.pop()
   -- Draw the FPS counter top-right.
   love.graphics.printf("FPS: " .. love.timer.getFPS(), love.graphics.getWidth() - 120, 10, 100, "right")

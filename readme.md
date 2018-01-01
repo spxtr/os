@@ -16,7 +16,6 @@ love . /PATH/TO/SOLDAT/DIR [MAP.pms]
 * Missing files currently halt the program.
   * Missing scenery should be replaced with a placeholder or nothing at all.
   * Missing textures should use a default.
-* Optimize scenery drawing by using SpriteBatches. Consider making an atlas.
 * Make sure we're loading the appropriate version of files where we have both
   `.png` and `.bmp`.
 * Some scenery are incorrectly scaled. It might be due to loading the wrong
