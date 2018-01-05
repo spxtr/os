@@ -87,7 +87,7 @@ function pms.load(path)
   map.polygons = {}
   map.vertMesh = {}
   for i=1,readInt32(buf) do
-    local poly = {vertices={}}
+    local poly = {vertices={}, perps={}, lengths={}}
     for j=1,3 do
       local vertex = {}
       vertex.x = readFloat32(buf)
@@ -108,7 +108,16 @@ function pms.load(path)
       if vertex.y < map.minY then map.minY = vertex.y end
       if vertex.y > map.maxY then map.maxY = vertex.y end
     end
-    skip(buf, 36)
+    for j=1,3 do
+      local perp = {}
+      perp.x = readFloat32(buf)
+      perp.y = readFloat32(buf)
+      perp.z = readFloat32(buf)
+      table.insert(poly.perps, perp)
+    end
+    for j=1,3 do
+      table.insert(poly.lengths, math.sqrt((poly.vertices[j].x - poly.vertices[j%3 + 1].x)^2 + (poly.vertices[j].y - poly.vertices[j%3 + 1].y)^2))
+    end
     poly.type = readInt8(buf)
     table.insert(map.polygons, poly)
   end

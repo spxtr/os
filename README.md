@@ -19,7 +19,9 @@ love src /path/to/soldat/dir Map.pms
 
 ## TODO FIXME PLEASE
 
-* Polygon edges.
+* Fix polygon edges.
+  * Soldat sometimes doesn't show edges in places where it doesn't make sense.
+  * For transparent polygons, edges can be seen underneath.
 * Look around with the mouse, zoom with the scrollwheel.
 * View colliders, spawnpoints, and waypoints.
 * Consider letterboxing instead of cutting off the edges. As currently

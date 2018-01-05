@@ -15,6 +15,35 @@ function love.load(arg)
   -- Use a static mesh to draw the polygons.
   polyMesh = love.graphics.newMesh(map.vertMesh, "triangles", "static")
   polyMesh:setTexture(texture)
+  -- Load polygon edges. For this we have to attach a Mesh to a SpriteBatch,
+  -- which will let us do per-vertex coloring.
+  local ok, edgeImg = pcall(loadImg, dir .. "/textures/edges/" .. map.texture)
+  if ok then
+    local edgeH = edgeImg:getHeight()
+    local edgeW = edgeImg:getWidth()
+    edges = love.graphics.newSpriteBatch(edgeImg, 3 * #map.polygons, "static")
+    local edgeMesh = love.graphics.newMesh({{"VertexColor", "byte", 4}}, 4 * edges:getBufferSize(), "fan", "static")
+    edges:attachAttribute("VertexColor", edgeMesh)
+    for i,poly in pairs(map.polygons) do
+      for j=1,3 do
+        -- The vertex order is top-left, bottom-left, top-right, bottom-right.
+        local lcol = poly.vertices[j].color
+        local rcol = poly.vertices[j%3 + 1].color
+        local id = 4 * (3*(i - 1) + j - 1)
+        edgeMesh:setVertexAttribute(1 + id, 1, lcol[1], lcol[2], lcol[3], lcol[4])
+        edgeMesh:setVertexAttribute(2 + id, 1, lcol[1], lcol[2], lcol[3], lcol[4])
+        edgeMesh:setVertexAttribute(3 + id, 1, rcol[1], rcol[2], rcol[3], rcol[4])
+        edgeMesh:setVertexAttribute(4 + id, 1, rcol[1], rcol[2], rcol[3], rcol[4])
+        -- Protrude the edge out from the polygon by its height. PMS maps store
+        -- perp vectors, so we don't need to compute them here.
+        edges:add(
+          poly.vertices[j].x - poly.perps[j].x * edgeH,
+          poly.vertices[j].y - poly.perps[j].y * edgeH,
+          math.atan2(poly.perps[j].y, poly.perps[j].x) - math.pi / 2,
+          poly.lengths[j] / edgeW, 1.0)
+      end
+    end
+  end
 
   local sceneryImages = {}
   for k,v in ipairs(map.scenery) do
@@ -69,6 +98,10 @@ function love.draw()
   -- Draw scenery in front of the players.
   for k,v in pairs(scenery[1]) do
     love.graphics.draw(v)
+  end
+  -- Draw edges.
+  if edges then
+    love.graphics.draw(edges)
   end
   -- Draw polygons.
   love.graphics.draw(polyMesh)
