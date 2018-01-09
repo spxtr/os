@@ -99,9 +99,13 @@ function love.draw()
   for k,v in pairs(scenery[1]) do
     love.graphics.draw(v)
   end
-  -- Draw edges.
+  -- Draw edges. Set a stencil test to prevent drawing behind transparent
+  -- polygons.
   if edges then
+    love.graphics.stencil(function() love.graphics.draw(polyMesh) end)
+    love.graphics.setStencilTest("equal", 0)
     love.graphics.draw(edges)
+    love.graphics.setStencilTest()
   end
   -- Draw polygons.
   love.graphics.draw(polyMesh)
