@@ -8,20 +8,22 @@ function love.load(arg)
 
   bgGrad = gradient{direction="vertical", map.bgTop, map.bgBottom}
 
+  local texture = loadImg(dir .. "/textures/" .. map.texture)
   -- Set the texture wrap mode to "repeat" instead of the default "clamp"
   -- which causes artifacts at the edge.
-  local texture = loadImg(dir .. "/textures/" .. map.texture)
   texture:setWrap("repeat", "repeat")
   -- Use a static mesh to draw the polygons.
   polyMesh = love.graphics.newMesh(map.vertMesh, "triangles", "static")
   polyMesh:setTexture(texture)
-  -- Load polygon edges. For this we have to attach a Mesh to a SpriteBatch,
+  -- Load polygon edges. For this we have to attach a Mesh to a SpriteBatch
   -- which will let us do per-vertex coloring.
   local ok, edgeImg = pcall(loadImg, dir .. "/textures/edges/" .. map.texture)
   if ok then
     local edgeH = edgeImg:getHeight()
     local edgeW = edgeImg:getWidth()
     edges = love.graphics.newSpriteBatch(edgeImg, 3 * #map.polygons, "static")
+    -- Default Meshes have color, position, and texture coords. These override
+    -- the settings from the SpriteBatch, but we only want to override color.
     local edgeMesh = love.graphics.newMesh({{"VertexColor", "byte", 4}}, 4 * edges:getBufferSize(), "fan", "static")
     edges:attachAttribute("VertexColor", edgeMesh)
     for i,poly in pairs(map.polygons) do
@@ -35,7 +37,7 @@ function love.load(arg)
         edgeMesh:setVertexAttribute(3 + id, 1, rcol[1], rcol[2], rcol[3], rcol[4])
         edgeMesh:setVertexAttribute(4 + id, 1, rcol[1], rcol[2], rcol[3], rcol[4])
         -- Protrude the edge out from the polygon by its height. PMS maps store
-        -- perp vectors, so we don't need to compute them here.
+        -- normalized perp vectors, so we don't need to compute them here.
         edges:add(
           poly.vertices[j].x - poly.perps[j].x * edgeH,
           poly.vertices[j].y - poly.perps[j].y * edgeH,
@@ -59,7 +61,10 @@ function love.load(arg)
     sceneryImages[k] = love.graphics.newImage(dat)
   end
 
-  -- level -> [SpriteBatch]
+  -- Level -> Style -> SpriteBatch. From the spec:
+  -- 0: Behind everything.
+  -- 1: In front of player.
+  -- 2: In front of polygons.
   scenery = {[0]={}, {}, {}}
   for k,v in ipairs(map.props) do
     if not scenery[v.level][v.style] then
@@ -99,8 +104,8 @@ function love.draw()
   for k,v in pairs(scenery[1]) do
     love.graphics.draw(v)
   end
-  -- Draw edges. Set a stencil test to prevent drawing behind transparent
-  -- polygons.
+  -- Draw edges. Set a stencil test to prevent drawing behind partially
+  -- transparent polygons.
   if edges then
     love.graphics.stencil(function() love.graphics.draw(polyMesh) end)
     love.graphics.setStencilTest("equal", 0)
