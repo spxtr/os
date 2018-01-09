@@ -19,6 +19,7 @@ function love.load(arg)
   -- which will let us do per-vertex coloring.
   local ok, edgeImg = pcall(loadImg, dir .. "/textures/edges/" .. map.texture)
   if ok then
+    edgeImg = greenScreen(edgeImg)
     local edgeH = edgeImg:getHeight()
     local edgeW = edgeImg:getWidth()
     edges = love.graphics.newSpriteBatch(edgeImg, 3 * #map.polygons, "static")
@@ -36,29 +37,18 @@ function love.load(arg)
         edgeMesh:setVertexAttribute(2 + id, 1, lcol[1], lcol[2], lcol[3], lcol[4])
         edgeMesh:setVertexAttribute(3 + id, 1, rcol[1], rcol[2], rcol[3], rcol[4])
         edgeMesh:setVertexAttribute(4 + id, 1, rcol[1], rcol[2], rcol[3], rcol[4])
-        -- Protrude the edge out from the polygon by its height. PMS maps store
-        -- normalized perp vectors, so we don't need to compute them here.
+        -- Protrude the edge out from the polygon by scaling its height by -1.
         edges:add(
-          poly.vertices[j].x - poly.perps[j].x * edgeH,
-          poly.vertices[j].y - poly.perps[j].y * edgeH,
+          poly.vertices[j].x, poly.vertices[j].y,
           math.atan2(poly.perps[j].y, poly.perps[j].x) - math.pi / 2,
-          poly.lengths[j] / edgeW, 1.0)
+          poly.lengths[j] / edgeW, -1.0)
       end
     end
   end
 
   local sceneryImages = {}
   for k,v in ipairs(map.scenery) do
-    local img = loadImg(dir .. "/scenery-gfx/" .. v)
-    local dat = img:getData()
-    -- Soldat likes to use (0, 255, 0, 255) to indicate transparency.
-    dat:mapPixel(function(x, y, r, g, b, a) 
-      if r == 0 and g == 255 and b == 0 and a == 255 then
-        return 0, 0, 0, 0
-      end
-      return r, g, b, a
-    end)
-    sceneryImages[k] = love.graphics.newImage(dat)
+    sceneryImages[k] = greenScreen(loadImg(dir .. "/scenery-gfx/" .. v))
   end
 
   -- Level -> Style -> SpriteBatch. From the spec:
@@ -160,6 +150,18 @@ function loadImg(path)
   end
   local bmp = path:gsub(".png", ".bmp")
   return newImg(bmp)
+end
+
+-- Soldat likes to use (0, 255, 0, 255) to indicate transparency.
+function greenScreen(img)
+  local dat = img:getData()
+  dat:mapPixel(function(x, y, r, g, b, a) 
+    if r == 0 and g == 255 and b == 0 and a == 255 then
+      return 0, 0, 0, 0
+    end
+    return r, g, b, a
+  end)
+  return love.graphics.newImage(dat)
 end
 
 -- From https://love2d.org/wiki/Gradients
