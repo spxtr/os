@@ -8,17 +8,28 @@ function love.load(arg)
 
   bgGrad = gradient{direction="vertical", map.bgTop, map.bgBottom}
 
-  -- Rain will be a big mesh with high texture u and v coords. We can make it
+  -- Weather is a big mesh with high texture u and v coords. We can make it
   -- look like it is falling by increasing the v on all vertices. Even better,
-  -- lets use two meshes with slightly different properties.
-  -- TODO: This comes at a pretty severe performance drop.
+  -- use two meshes with slightly different properties.
   local rainImg = loadImg(dir .. "/sparks-gfx/rain.png")
+  local snowImg = loadImg(dir .. "/sparks-gfx/snow.png")
+  local sandImg = loadImg(dir .. "/sparks-gfx/sand.png")
+  -- We'll have tu, tv much larger than 1, so set textures to repeat.
   rainImg:setWrap("repeat", "repeat")
+  snowImg:setWrap("repeat", "repeat")
+  sandImg:setWrap("repeat", "repeat")
   -- Use nearest filtering instead of linear. It's simpler and we don't need to
   -- premultiply alpha values in our rain texture.
   rainImg:setFilter("nearest", "nearest")
-  rainMesh1 = makeRainMesh(rainImg, 100)
-  rainMesh2 = makeRainMesh(rainImg, 50)
+  snowImg:setFilter("nearest", "nearest")
+  sandImg:setFilter("nearest", "nearest")
+
+  rainMesh1 = makeWeatherMesh(rainImg, 100)
+  rainMesh2 = makeWeatherMesh(rainImg, 50)
+  snowMesh1 = makeWeatherMesh(snowImg, 80)
+  snowMesh2 = makeWeatherMesh(snowImg, 30)
+  sandMesh1 = makeWeatherMesh(sandImg, 80)
+  sandMesh2 = makeWeatherMesh(sandImg, 30)
 
   local texture = loadImg(dir .. "/textures/" .. map.texture)
   -- Set the texture wrap mode to "repeat" instead of the default "clamp"
@@ -97,10 +108,16 @@ function love.draw()
 
   -- Draw background. It extends 100px out of the boundary of the map.
   love.graphics.draw(bgGrad, map.minX - 100, map.minY - 100, 0.0, map.maxX - map.minX + 200, map.maxY - map.minY + 200)
-  -- Draw rain.
+  -- Draw weather.
   if map.weather == 1 then
     love.graphics.draw(rainMesh2)
     love.graphics.draw(rainMesh1)
+  elseif map.weather == 2 then
+    love.graphics.draw(sandMesh2)
+    love.graphics.draw(sandMesh1)
+  elseif map.weather == 3 then
+    love.graphics.draw(snowMesh2)
+    love.graphics.draw(snowMesh1)
   end
   -- Draw scenery in the back.
   for k,v in pairs(scenery[0]) do
@@ -132,8 +149,14 @@ function love.draw()
 end
 
 function love.update(dt)
-  updateRainMesh(rainMesh1, dt, 0.1, -4.0)
-  updateRainMesh(rainMesh2, dt, -0.1, -2.0)
+  -- TODO: We can be more creative with our x velocities for weather. Some
+  -- random gusts would make the snow look really nice.
+  updateWeatherMesh(rainMesh1, dt, 0.1, -4.0)
+  updateWeatherMesh(rainMesh2, dt, -0.1, -2.0)
+  updateWeatherMesh(snowMesh1, dt, 0.1*math.sin(love.timer.getTime() * 2*math.pi*0.23), -0.8)
+  updateWeatherMesh(snowMesh2, dt, 0.1*math.sin(love.timer.getTime() * 2*math.pi*0.15), -0.6)
+  updateWeatherMesh(sandMesh1, dt, -4.0 - math.sin(love.timer.getTime() * 2*math.pi*0.23), -3.0)
+  updateWeatherMesh(sandMesh2, dt, -3.0 - math.sin(love.timer.getTime() * 2*math.pi*0.15), -2.0)
   local vel = 200
   if love.keyboard.isDown("left") then
     viewport.x = viewport.x - vel*dt
@@ -208,27 +231,27 @@ function gradient(colors)
     return result
 end
 
-function makeRainMesh(img, alpha)
-  -- rainScale determines how large each rain image will appear.
-  local rainScale = 150
-  local rainUScale = (map.maxX - map.minX + 200) / rainScale
-  local rainVScale = (map.maxY - map.minY + 200) / rainScale
-  local rm = love.graphics.newMesh({
+function makeWeatherMesh(img, alpha)
+  -- scale determines how large each image will appear in pixels.
+  local scale = 150
+  local uScale = (map.maxX - map.minX + 200) / scale
+  local vScale = (map.maxY - map.minY + 200) / scale
+  local m = love.graphics.newMesh({
     {map.minX - 100, map.minY - 100, 0, 0, 255, 255, 255, alpha},
-    {map.maxX + 100, map.minY - 100, rainUScale, 0, 255, 255, 255, alpha},
-    {map.maxX + 100, map.maxY + 100, rainUScale, rainVScale, 255, 255, 255, alpha},
-    {map.minX - 100, map.maxY + 100, 0, rainVScale, 255, 255, 255, alpha},
+    {map.maxX + 100, map.minY - 100, uScale, 0, 255, 255, 255, alpha},
+    {map.maxX + 100, map.maxY + 100, uScale, vScale, 255, 255, 255, alpha},
+    {map.minX - 100, map.maxY + 100, 0, vScale, 255, 255, 255, alpha},
   })
-  rm:setTexture(img)
-  return rm
+  m:setTexture(img)
+  return m
 end
 
 -- TODO: Don't keep decreasing forever. Occasionally roll back coords to
 -- equivalent positions.
-function updateRainMesh(rm, dt, vu, vv)
-  for i=1,rm:getVertexCount() do
-    local oldU, oldV = rm:getVertexAttribute(i, 2)
+function updateWeatherMesh(m, dt, vu, vv)
+  for i=1,m:getVertexCount() do
+    local oldU, oldV = m:getVertexAttribute(i, 2)
     local newU, newV = oldU + vu*dt, oldV + vv*dt
-    rm:setVertexAttribute(i, 2, newU, newV)
+    m:setVertexAttribute(i, 2, newU, newV)
   end
 end
