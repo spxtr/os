@@ -8,6 +8,18 @@ function love.load(arg)
 
   bgGrad = gradient{direction="vertical", map.bgTop, map.bgBottom}
 
+  -- Rain will be a big mesh with high texture u and v coords. We can make it
+  -- look like it is falling by increasing the v on all vertices. Even better,
+  -- lets use two meshes with slightly different properties.
+  -- TODO: This comes at a pretty severe performance drop.
+  local rainImg = loadImg(dir .. "/sparks-gfx/rain.png")
+  rainImg:setWrap("repeat", "repeat")
+  -- Use nearest filtering instead of linear. It's simpler and we don't need to
+  -- premultiply alpha values in our rain texture.
+  rainImg:setFilter("nearest", "nearest")
+  rainMesh1 = makeRainMesh(rainImg, 100)
+  rainMesh2 = makeRainMesh(rainImg, 50)
+
   local texture = loadImg(dir .. "/textures/" .. map.texture)
   -- Set the texture wrap mode to "repeat" instead of the default "clamp"
   -- which causes artifacts at the edge.
@@ -85,6 +97,11 @@ function love.draw()
 
   -- Draw background. It extends 100px out of the boundary of the map.
   love.graphics.draw(bgGrad, map.minX - 100, map.minY - 100, 0.0, map.maxX - map.minX + 200, map.maxY - map.minY + 200)
+  -- Draw rain.
+  if map.weather == 1 then
+    love.graphics.draw(rainMesh2)
+    love.graphics.draw(rainMesh1)
+  end
   -- Draw scenery in the back.
   for k,v in pairs(scenery[0]) do
     love.graphics.draw(v)
@@ -115,6 +132,8 @@ function love.draw()
 end
 
 function love.update(dt)
+  updateRainMesh(rainMesh1, dt, 0.1, -4.0)
+  updateRainMesh(rainMesh2, dt, -0.1, -2.0)
   local vel = 200
   if love.keyboard.isDown("left") then
     viewport.x = viewport.x - vel*dt
@@ -187,4 +206,29 @@ function gradient(colors)
     result = love.graphics.newImage(result)
     result:setFilter('linear', 'linear')
     return result
+end
+
+function makeRainMesh(img, alpha)
+  -- rainScale determines how large each rain image will appear.
+  local rainScale = 150
+  local rainUScale = (map.maxX - map.minX + 200) / rainScale
+  local rainVScale = (map.maxY - map.minY + 200) / rainScale
+  local rm = love.graphics.newMesh({
+    {map.minX - 100, map.minY - 100, 0, 0, 255, 255, 255, alpha},
+    {map.maxX + 100, map.minY - 100, rainUScale, 0, 255, 255, 255, alpha},
+    {map.maxX + 100, map.maxY + 100, rainUScale, rainVScale, 255, 255, 255, alpha},
+    {map.minX - 100, map.maxY + 100, 0, rainVScale, 255, 255, 255, alpha},
+  })
+  rm:setTexture(img)
+  return rm
+end
+
+-- TODO: Don't keep decreasing forever. Occasionally roll back coords to
+-- equivalent positions.
+function updateRainMesh(rm, dt, vu, vv)
+  for i=1,rm:getVertexCount() do
+    local oldU, oldV = rm:getVertexAttribute(i, 2)
+    local newU, newV = oldU + vu*dt, oldV + vv*dt
+    rm:setVertexAttribute(i, 2, newU, newV)
+  end
 end

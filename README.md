@@ -19,6 +19,8 @@ love src /path/to/soldat/dir Map.pms
 
 ## TODO FIXME PLEASE
 
+* Snow, sand graphics.
+* Weather sound effects.
 * Look around with the mouse, zoom with the scrollwheel.
 * View colliders, spawnpoints, and waypoints.
 * Consider letterboxing instead of cutting off the edges. As currently
