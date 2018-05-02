@@ -11,9 +11,9 @@ function love.load(arg)
   -- Weather is a big mesh with high texture u and v coords. We can make it
   -- look like it is falling by increasing the v on all vertices. Even better,
   -- use two meshes with slightly different properties.
-  local rainImg = loadImg(dir .. "/sparks-gfx/rain.png")
-  local snowImg = loadImg(dir .. "/sparks-gfx/snow.png")
-  local sandImg = loadImg(dir .. "/sparks-gfx/sand.png")
+  local rainImg = love.graphics.newImage(loadImg(dir .. "/sparks-gfx/rain.png"))
+  local snowImg = love.graphics.newImage(loadImg(dir .. "/sparks-gfx/snow.png"))
+  local sandImg = love.graphics.newImage(loadImg(dir .. "/sparks-gfx/sand.png"))
   -- We'll have tu, tv much larger than 1, so set textures to repeat.
   rainImg:setWrap("repeat", "repeat")
   snowImg:setWrap("repeat", "repeat")
@@ -31,7 +31,7 @@ function love.load(arg)
   sandMesh1 = makeWeatherMesh(sandImg, 80)
   sandMesh2 = makeWeatherMesh(sandImg, 30)
 
-  local texture = loadImg(dir .. "/textures/" .. map.texture)
+  local texture = love.graphics.newImage(loadImg(dir .. "/textures/" .. map.texture))
   -- Set the texture wrap mode to "repeat" instead of the default "clamp"
   -- which causes artifacts at the edge.
   texture:setWrap("repeat", "repeat")
@@ -178,8 +178,7 @@ function newImg(path)
   local contents = f:read("*all")
   f:close()
   local fdat = love.filesystem.newFileData(contents, path)
-  local imgDat = love.image.newImageData(fdat)
-  return love.graphics.newImage(imgDat)
+  return love.image.newImageData(fdat)
 end
 
 -- Many of Soldat's images can be either .bmp or .png. In general, prefer the
@@ -195,8 +194,7 @@ function loadImg(path)
 end
 
 -- Soldat likes to use (0, 255, 0, 255) to indicate transparency.
-function greenScreen(img)
-  local dat = img:getData()
+function greenScreen(dat)
   dat:mapPixel(function(x, y, r, g, b, a) 
     if r == 0 and g == 255 and b == 0 and a == 255 then
       return 0, 0, 0, 0
