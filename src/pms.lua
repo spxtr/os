@@ -1,7 +1,6 @@
 pms = {}
 
--- Lua doesn't seem to have any native struct (un)packing. Rather than use some
--- library we can just get by with doing it manually.
+-- TODO: Use love.data, introduced in 11.0.
 -- Some of these functions are from http://lua-users.org/wiki/ReadWriteFormat
 
 local function newStringBuf(str)
@@ -37,7 +36,7 @@ end
 local function readColor(buf)
   local b0, b1, b2, b3 = string.byte(buf.str, buf.pos, buf.pos + 3)
   buf.pos = buf.pos + 4
-  return {b2, b1, b0, b3} -- Yes, that's right: BGRA.
+  return {b2/255.0, b1/255.0, b0/255.0, b3/255.0} -- Yes, that's right: BGRA.
 end
 
 local function readFloat32(buf)
@@ -147,7 +146,7 @@ function pms.load(path)
     prop.sy = readFloat32(buf)
     -- For some reason there is a separate alpha byte. Let me know if you know
     -- why this is. For now I'm using it rather than that in the color struct.
-    local a = readInt8(buf)
+    local a = readInt8(buf) / 255.0
     skip(buf, 3)
     prop.color = readColor(buf)
     prop.color[4] = a

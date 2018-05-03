@@ -24,12 +24,12 @@ function love.load(arg)
   snowImg:setFilter("nearest", "nearest")
   sandImg:setFilter("nearest", "nearest")
 
-  rainMesh1 = makeWeatherMesh(rainImg, 100)
-  rainMesh2 = makeWeatherMesh(rainImg, 50)
-  snowMesh1 = makeWeatherMesh(snowImg, 80)
-  snowMesh2 = makeWeatherMesh(snowImg, 30)
-  sandMesh1 = makeWeatherMesh(sandImg, 80)
-  sandMesh2 = makeWeatherMesh(sandImg, 30)
+  rainMesh1 = makeWeatherMesh(rainImg, 0.4)
+  rainMesh2 = makeWeatherMesh(rainImg, 0.2)
+  snowMesh1 = makeWeatherMesh(snowImg, 0.3)
+  snowMesh2 = makeWeatherMesh(snowImg, 0.1)
+  sandMesh1 = makeWeatherMesh(sandImg, 0.3)
+  sandMesh2 = makeWeatherMesh(sandImg, 0.1)
 
   local texture = love.graphics.newImage(loadImg(dir .. "/textures/" .. map.texture))
   -- Set the texture wrap mode to "repeat" instead of the default "clamp"
@@ -91,7 +91,7 @@ function love.load(arg)
 end
 
 function love.draw()
-  love.graphics.setColor(255, 255, 255)
+  love.graphics.setColor(1.0, 1.0, 1.0)
   love.graphics.push()
 
   -- Origin at the center of the window.
@@ -196,7 +196,7 @@ end
 -- Soldat likes to use (0, 255, 0, 255) to indicate transparency.
 function greenScreen(dat)
   dat:mapPixel(function(x, y, r, g, b, a) 
-    if r == 0 and g == 255 and b == 0 and a == 255 then
+    if r == 0 and g == 1.0 and b == 0 and a == 1.0 then
       return 0, 0, 0, 0
     end
     return r, g, b, a
@@ -222,7 +222,7 @@ function gradient(colors)
         else
             x, y = i - 1, 0
         end
-        result:setPixel(x, y, color[1], color[2], color[3], color[4] or 255)
+        result:setPixel(x, y, color[1], color[2], color[3], color[4] or 1.0)
     end
     result = love.graphics.newImage(result)
     result:setFilter('linear', 'linear')
@@ -235,10 +235,10 @@ function makeWeatherMesh(img, alpha)
   local uScale = (map.maxX - map.minX + 200) / scale
   local vScale = (map.maxY - map.minY + 200) / scale
   local m = love.graphics.newMesh({
-    {map.minX - 100, map.minY - 100, 0, 0, 255, 255, 255, alpha},
-    {map.maxX + 100, map.minY - 100, uScale, 0, 255, 255, 255, alpha},
-    {map.maxX + 100, map.maxY + 100, uScale, vScale, 255, 255, 255, alpha},
-    {map.minX - 100, map.maxY + 100, 0, vScale, 255, 255, 255, alpha},
+    {map.minX - 100, map.minY - 100, 0, 0, 1.0, 1.0, 1.0, alpha},
+    {map.maxX + 100, map.minY - 100, uScale, 0, 1.0, 1.0, 1.0, alpha},
+    {map.maxX + 100, map.maxY + 100, uScale, vScale, 1.0, 1.0, 1.0, alpha},
+    {map.minX - 100, map.maxY + 100, 0, vScale, 1.0, 1.0, 1.0, alpha},
   })
   m:setTexture(img)
   return m
